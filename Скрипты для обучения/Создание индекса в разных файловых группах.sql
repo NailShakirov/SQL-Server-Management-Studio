@@ -1,7 +1,7 @@
 USE AdventureWorks2014
 
 
---Добавим новый файл в существующую файловую группу
+--Р”РѕР±Р°РІРёРј РЅРѕРІС‹Р№ С„Р°Р№Р» РІ СЃСѓС‰РµСЃС‚РІСѓСЋС‰СѓСЋ С„Р°Р№Р»РѕРІСѓСЋ РіСЂСѓРїРїСѓ
 ALTER DATABASE AdventureWorks2014
 ADD FILE 
 (NAME='Second_on_primary',
@@ -10,7 +10,7 @@ SIZE = 20MB,
 MAXSIZE = 25MB,  
 FILEGROWTH = 5MB )
 
---Добавим еще один файл в существующую файловую группу с другим расширением
+--Р”РѕР±Р°РІРёРј РµС‰Рµ РѕРґРёРЅ С„Р°Р№Р» РІ СЃСѓС‰РµСЃС‚РІСѓСЋС‰СѓСЋ С„Р°Р№Р»РѕРІСѓСЋ РіСЂСѓРїРїСѓ СЃ РґСЂСѓРіРёРј СЂР°СЃС€РёСЂРµРЅРёРµРј
 ALTER DATABASE AdventureWorks2014
 ADD FILE 
 (NAME='Third_on_primary',
@@ -20,7 +20,7 @@ MAXSIZE = 25MB,
 FILEGROWTH = 5MB )
 
 
---Добавим  файловую группу и пару файлов  в ней
+--Р”РѕР±Р°РІРёРј  С„Р°Р№Р»РѕРІСѓСЋ РіСЂСѓРїРїСѓ Рё РїР°СЂСѓ С„Р°Р№Р»РѕРІ  РІ РЅРµР№
 ALTER DATABASE AdventureWorks2014
 ADD FILEGROUP Second
 
@@ -43,7 +43,7 @@ to FILEGROUP Second
 
 
 
---туперь мы создаем таблицу в первой файловй группе
+--С‚СѓРїРµСЂСЊ РјС‹ СЃРѕР·РґР°РµРј С‚Р°Р±Р»РёС†Сѓ РІ РїРµСЂРІРѕР№ С„Р°Р№Р»РѕРІР№ РіСЂСѓРїРїРµ
 IF object_id('MyClients') IS NOT NULL
 			Begin
 				Drop TABLE MyClients
@@ -58,10 +58,10 @@ ELSE
 				)ON 'Primary'
 			END	
 
---определить  файловую группу где лежит таблица можно узнать с помощью:
+--РѕРїСЂРµРґРµР»РёС‚СЊ  С„Р°Р№Р»РѕРІСѓСЋ РіСЂСѓРїРїСѓ РіРґРµ Р»РµР¶РёС‚ С‚Р°Р±Р»РёС†Р° РјРѕР¶РЅРѕ СѓР·РЅР°С‚СЊ СЃ РїРѕРјРѕС‰СЊСЋ:
 sp_help 'MyClients'
 
---заполним данными 
+--Р·Р°РїРѕР»РЅРёРј РґР°РЅРЅС‹РјРё 
 INSERT INTO MyClients
 select 
 				 BusinessEntityID
@@ -70,28 +70,28 @@ select
 				,PersonType 
 from Person.Person
 
---теперь создадим некластеризованный индекс для этой таблицы только в другой файловой группе
+--С‚РµРїРµСЂСЊ СЃРѕР·РґР°РґРёРј РЅРµРєР»Р°СЃС‚РµСЂРёР·РѕРІР°РЅРЅС‹Р№ РёРЅРґРµРєСЃ РґР»СЏ СЌС‚РѕР№ С‚Р°Р±Р»РёС†С‹ С‚РѕР»СЊРєРѕ РІ РґСЂСѓРіРѕР№ С„Р°Р№Р»РѕРІРѕР№ РіСЂСѓРїРїРµ
 --drop INDEx  NONCL_MyClients_Name ON MyClients
 CREATE  INDEX NONCL_MyClients_Name
 ON MyClients(Name)
 ON SECOND
 
---смотрим план запроса
+--СЃРјРѕС‚СЂРёРј РїР»Р°РЅ Р·Р°РїСЂРѕСЃР°
 select PersonType from MyClients 
 With  (index(NONCL_MyClients_Name))
 where Name='Dylan' 
 
---удалим это индекс
+--СѓРґР°Р»РёРј СЌС‚Рѕ РёРЅРґРµРєСЃ
 drop INDEx  NONCL_MyClients_Name ON MyClients
 
---теперь создадим индекс только с включением столбца PersonType, так называемый покрывающий индекс
+--С‚РµРїРµСЂСЊ СЃРѕР·РґР°РґРёРј РёРЅРґРµРєСЃ С‚РѕР»СЊРєРѕ СЃ РІРєР»СЋС‡РµРЅРёРµРј СЃС‚РѕР»Р±С†Р° PersonType, С‚Р°Рє РЅР°Р·С‹РІР°РµРјС‹Р№ РїРѕРєСЂС‹РІР°СЋС‰РёР№ РёРЅРґРµРєСЃ
 CREATE  INDEX NONCL_MyClients_Name
 ON MyClients(Name)
 INCLUDE(PersonType)
 ON SECOND
 
 
---смотрим теперь план запроса, сравникивем и понмаем что  теперь нет loop
+--СЃРјРѕС‚СЂРёРј С‚РµРїРµСЂСЊ РїР»Р°РЅ Р·Р°РїСЂРѕСЃР°, СЃСЂР°РІРЅРёРєРёРІРµРј Рё РїРѕРЅРјР°РµРј С‡С‚Рѕ  С‚РµРїРµСЂСЊ РЅРµС‚ loop
 select PersonType from MyClients 
 With  (index(NONCL_MyClients_Name))
 where Name='Dylan' 
