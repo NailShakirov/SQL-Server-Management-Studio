@@ -119,120 +119,72 @@ where index_id=1
 
 
 
+--Создадим таблицу с класстерным индексом
+--что будет если мы удалим половину строу
+--как изменится инфа на страницах 
+
+--создадим таблицу
+IF object_id('Table1') IS NOT NULL
+			Begin
+				Drop TABLE Table1
+			END
+ELSE 
+			Begin
+				Create Table Table1(
+				ID int,
+				Name nvarchar(100),
+				LastName nvarchar(100),
+				PersonType  nvarchar(2),
+				)ON 'Primary'
+			END	
+
+--вставим данные
+INSERT INTO Table1
+select 
+				 BusinessEntityID
+				,FirstName  
+				,LastName    
+				,PersonType 
+from Person.Person
+GO 
 
 
---рассмотрим таблицы которые устроены как кучи
-select * from sys.dm_db_database_page_allocations(db_id(),
-				NULL, NULL, NULL, 'DETAILED') 
-select * from sys.objects
-where object_id in (
-				SELECT distinct object_id FROM sys.dm_db_database_page_allocations(db_id(),
-				NULL, NULL, NULL, 'DETAILED') 
-				where index_id=0
-				)
+--создадим классерный  индекс
+CREATE  ClUSTERED INDEX CL_Table1_ID
+ON Table1(ID)
 
-
---рассмотрим таблицы  у которых 3 слоя дерева, если такие есть конечно
-select * from sys.objects
-where object_id in (
-				SELECT * FROM sys.dm_db_database_page_allocations(db_id(),
-				NULL, NULL, NULL, 'DETAILED') 
- 			where  page_level=2
-				)
-
---одна из таких таблиц Person
-select object_id('Person.Person')
-
---рассмотрим ее индексы
-select * from sys.indexes where object_id=object_id('Person.Person')
-
-
-
-
---проверяем файлы БД, проверь на всяк через обозреватель объектов
-SELECT distinct allocated_page_file_id FROM sys.dm_db_database_page_allocations(db_id(),
-NULL, NULL, NULL, 'DETAILED')
-
-
---проверяем какие объектсы содержатся в страницах, можно заметить что среди них есть и представленияб значит скорее всего
---для них были созданы индексы
-select * from sys.objects
-where object_id in (
-				SELECT distinct object_id FROM sys.dm_db_database_page_allocations(db_id(),
-				NULL, NULL, NULL, 'DETAILED')
-				)
-
-				
-
---рассмотрим таблицы которые устроены как кучи
-select * from sys.objects
-where object_id in (
-				SELECT distinct object_id FROM sys.dm_db_database_page_allocations(db_id(),
-				NULL, NULL, NULL, 'DETAILED') 
-				where index_id=0
-				)
-
---рассмотрим таблицы  у которых 3 слоя дерева 
-select * from sys.objects
-where object_id in (
-				SELECT distinct object_id FROM sys.dm_db_database_page_allocations(db_id(),
-				NULL, NULL, NULL, 'DETAILED') 
- 			where  page_level=2
-				)
-
-				select * from Person.Person where BusinessEntityID=80
---нашли одну из таблиц, у нее класетризованный индексб найдем корневой узел и проверим
-select object_id('Person.Person')
-select *  FROM sys.dm_db_database_page_allocations(db_id(),
-				object_id('Person.Person'), NULL, NULL, 'DETAILED') 
-				where page_level=3 and index_id=1
-
-
---содержит айди дочерних страниц и ключи 
-DBCC PAGE(AdventureWorks2014,1,903,3) --with  TABLERESULTS
-
-DBCC PAGE(AdventureWorks2014,1,903,2)--with  TABLERESULTS
-select CONVERT(VarBinary(MAX), 'парр')
-select convert(varchar(max),0x09ea0500710000138713260a0100c817a8040000)
-SELECT 
-  CONVERT ( varbinary (64), 0x06010000 ),
-   C
-
-
-
-select * from sys.dm_db_index_physical_stats(db_id(),	object_id('Person.Person'),NULL,NULL, 'Detailed')
+--найдем корневой узел
+select
+ allocated_page_file_id 
+,allocated_page_page_id
+,index_id
+,page_level
+,* from sys.dm_db_database_page_allocations(7,OBJECT_ID('Table1'),null,null,'DETAILED')
 where index_id=1
-select * from MyClients
-
-sp_help 'MyClients'
-
-SELECT CONVERT(varchar, 0x16000093) 
-SELECT CONVERT(varchar(100), 0x01020002)
+order by 4 desc
+--688 cтраница, 3 файл
 
 
-
-select * from sys.indexes where object_id=object_id('MyClients')
-select * from sys.dm_db_index_physical_stats(db_id(),object_id('MyClients'),NULL,NULL, 'Detailed')
-SELECT distinct allocated_page_file_id FROM sys.dm_db_database_page_allocations(db_id('AdventureWorks2014'),
-object_id('MyClients'), NULL, NULL, 'DETAILED')
-WHERE page_type = 1;
-
- DBCC TRACEON(3604)
+--исследуем корневой узел
+DBCC TRACEON(3604)
+DBCC PAGE(AdventureWorks2014,3,688,3)
+--возьмем 659 дочернюю страницу, 4 файл
 
 
-	select * from sys.dm_db_page_info (7, NULL, NULL, 'DETAILED')
-
-	--фунция для просмотра страниц данного объекта
- DBCC IND(AdventureWorks2014,'Person.Person',-1) 
+DBCC PAGE(AdventureWorks2014,4,659,3)
+--возьмем 96 строку ID = 849 
 
 
 
-	DBCC PAGE(AdventureWorks2014,5,16,1) --with  TABLERESULTS
+--Теперь удалим половину строк из Table1
+DELETE  from Table1
+where ID<9800
+ 
+	
+--Перейдем  опять на 659 страницу
+DBCC PAGE(AdventureWorks2014,4,659,3)
+--прежних записей уже нет 
 
 
 
 
-
-
-	SELECT * FROM sys.dm_db_database_page_allocations(db_id('AdventureWorks2014'),
-NULl, NULL, NULL, 'DETAILED') where page_type=10
