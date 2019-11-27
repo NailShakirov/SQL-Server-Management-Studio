@@ -1,38 +1,38 @@
 Use BANK
 
---Подзапрос
+--РџРѕРґР·Р°РїСЂРѕСЃ
 
---№1-- Найти Клиента,у которого остаток на счете максимальный
+--в„–1-- РќР°Р№С‚Рё РљР»РёРµРЅС‚Р°,Сѓ РєРѕС‚РѕСЂРѕРіРѕ РѕСЃС‚Р°С‚РѕРє РЅР° СЃС‡РµС‚Рµ РјР°РєСЃРёРјР°Р»СЊРЅС‹Р№
 SELECT Name, SurName from Clients where ClientID = (SElECT TOP(1) 
-СlientID from RESOURCES order by Rest desc)
+РЎlientID from RESOURCES order by Rest desc)
 
 
---#2 -- Найти все номера телефонов людей,кто проживает в Казани
-SELECT Number,Type  from PhoneNumbers where СlientID = (Select ClientID from Clients where City='Казань')
+--#2 -- РќР°Р№С‚Рё РІСЃРµ РЅРѕРјРµСЂР° С‚РµР»РµС„РѕРЅРѕРІ Р»СЋРґРµР№,РєС‚Рѕ РїСЂРѕР¶РёРІР°РµС‚ РІ РљР°Р·Р°РЅРё
+SELECT Number,Type  from PhoneNumbers where РЎlientID = (Select ClientID from Clients where City='РљР°Р·Р°РЅСЊ')
 
 
 
 
 --Union 
---Выбреать физ клиентов и юр  клиентов
+--Р’С‹Р±СЂРµР°С‚СЊ С„РёР· РєР»РёРµРЅС‚РѕРІ Рё СЋСЂ  РєР»РёРµРЅС‚РѕРІ
 
-Select * from Clients where Type='Физ'
+Select * from Clients where Type='Р¤РёР·'
 Union ALL
-Select * from Clients where Type='Юр'
+Select * from Clients where Type='Р®СЂ'
 Go
 
 
 --Join 
---Вывести все счета людей проживаюих в России
+--Р’С‹РІРµСЃС‚Рё РІСЃРµ СЃС‡РµС‚Р° Р»СЋРґРµР№ РїСЂРѕР¶РёРІР°СЋРёС… РІ Р РѕСЃСЃРёРё
 
 Select a.* 
 from RESOURCES  a 
 JOIN  Clients b
-ON a.СlientID=b.ClientID
-AND b.Country='Россия'
+ON a.РЎlientID=b.ClientID
+AND b.Country='Р РѕСЃСЃРёСЏ'
 GO
 
---запросы с примененимем коллации
+--Р·Р°РїСЂРѕСЃС‹ СЃ РїСЂРёРјРµРЅРµРЅРёРјРµРј РєРѕР»Р»Р°С†РёРё
 
 
 
@@ -52,7 +52,7 @@ COLLATE Albanian_100_CS_AS_KS_WS_SC ASC;
 
 
 
---Вьюха показывающая все уникальные метсо прживания клиентов
+--Р’СЊСЋС…Р° РїРѕРєР°Р·С‹РІР°СЋС‰Р°СЏ РІСЃРµ СѓРЅРёРєР°Р»СЊРЅС‹Рµ РјРµС‚СЃРѕ РїСЂР¶РёРІР°РЅРёСЏ РєР»РёРµРЅС‚РѕРІ
 
 CREATE VIEW PLaces as
 SELECT DIStinct  Country, City from Clients 
