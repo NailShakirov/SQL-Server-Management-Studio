@@ -11,7 +11,8 @@ select * from sys.indexes
 where object_id=OBJECT_ID('[Person].[Person]')
 and  index_id>1
 --такой есть AK_Person_rowguid, index_id=3
-
+--select * from [Person].[Person] 
+--это поле rowguid, cодержит значения 16 чные, не путайтесь
 
 
 --используем системную табличную функцию 
@@ -22,7 +23,7 @@ page_level
 ,allocated_page_file_id
 ,allocated_page_page_id
 ,*
-from sys.dm_db_database_page_allocations(7,OBJECT_ID('Person.Person'),3,null,'DETAILED')
+from sys.dm_db_database_page_allocations(DB_ID(),OBJECT_ID('Person.Person'),3,null,'DETAILED')
 order by 1 desc
 --нашли, айди 12776
 
@@ -30,19 +31,20 @@ order by 1 desc
 DBCC TRACEON(3604)
 
 --рассмотрим содержимое страницы 
-DBCC PAGE(AdventureWorks2014,1,12776,3) 
+DBCC PAGE(AdventureWorks,1,11344,3) 
 --содержит ссылки на дочерние страницы 65 штук
---как ключи содержит значения поля (rowguid)
+--ключи содержатся в поле rowguid - значения поля "rowguid"
 
 
 
 --спустимся на листовой уровень
 --страница 12745
-DBCC PAGE(AdventureWorks2014,1,12745,3) 
+DBCC PAGE(AdventureWorks,1,11316,3) 
 --содержит значения поля  (rowguid) как ключи
 --содержит значения поля BusinessEntityID, потому что это ключ класстерного индекса
---содержит Hash строк 
-
+--содержит Hash строк. Это хеш всех ключевых строк, не знаю какая хеш функция
+--этот хеш не сохраняется в странице, а нужен для управления блокировками
+--подробнее --https://social.msdn.microsoft.com/Forums/en-US/f39b0443-34f6-41b3-be1f-ea8e08c98ca5/dbcc-page-command?forum=sqlgetstarted 
 
 
 --мы возьмем конкетное значение 0BA160A0-7CE3-4DCF-BF28-044E7ED363E6
@@ -50,7 +52,7 @@ DBCC PAGE(AdventureWorks2014,1,12745,3)
 --далее по ключу определит все значения из класстерного индекса
 --и так циклически для каждого значения rowguid 
 select * from  Person.Person where rowguid='0BA160A0-7CE3-4DCF-BF28-044E7ED363E6'
-
+-------посмотри план запроса
 
 --Что будет если не было бы класстерного индекса
 
@@ -98,7 +100,7 @@ order by 1 desc
 
 
 --исследуем корневую страницу
-DBCC PAGE(AdventureWorks2014,4,55,3) 
+DBCC PAGE(AdventureWorks,1,23704,3) 
 --содержит ссылки на дочерние страницы 45
 --в качестве ключа значение поля (ID)
 --содержит ссылки на строки 
@@ -106,9 +108,9 @@ DBCC PAGE(AdventureWorks2014,4,55,3)
 --исследуем дочернюю страницу 88
 --ID 609
 --HEAP RID 0x3D5F000001007700
+select * from MyPersons
 
-
-DBCC PAGE(AdventureWorks2014,4,88,3) 
+DBCC PAGE(AdventureWorks,1,23497,3) 
 --содержит сссылки на строки HEAP
 --запомним значение ID =609,HEAP RID=0x3D5F000001007700, HASH=(d4e524d0ce42)
 --заметим HEAP RID состоит из возьми байтов
@@ -128,7 +130,7 @@ from sys.dm_db_database_page_allocations(7,OBJECT_ID('MyPersons'),0,null,'DETAIL
 order by 1 desc
 
 --посмотрим что хранится в страницах кучи
-DBCC PAGE(AdventureWorks2014,1,24381,3) 
+DBCC PAGE(AdventureWorks,1,23392,3) 
 --искомое значение хранится на данной странице
 
 
